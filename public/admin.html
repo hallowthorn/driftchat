@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Driftchat Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { display: block; overflow-y: auto; }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 16px 60px; }
+    .login { max-width: 360px; margin: 80px auto; }
+    .login input, .field { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
+    .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; min-width: 130px; }
+    .stat b { display: block; font: 800 26px var(--display); }
+    .stat span { color: var(--muted); font-size: 12.5px; }
+    h2 { font: 700 20px var(--display); margin: 28px 0 12px; }
+    .report { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+    .report-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .tag { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255,77,106,.15); color: #ff9aac; margin-right: 6px; }
+    .tag.mode { background: rgba(76,141,255,.15); color: #9dbfff; }
+    .meta { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+    .meta code { color: var(--text); }
+    .details { margin: 10px 0 0; font-size: 14px; }
+    .transcript { margin-top: 10px; background: var(--bg); border-radius: 10px; padding: 10px 12px; max-height: 220px; overflow-y: auto; font-size: 13.5px; }
+    .transcript div { margin: 2px 0; white-space: pre-wrap; word-break: break-word; }
+    .transcript .r { color: #ffb39b; } .transcript .s { color: #9dbfff; }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .actions .btn { padding: 8px 12px; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    td, th { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 500; }
+    .empty { color: var(--muted); padding: 20px; text-align: center; border: 1px dashed var(--line); border-radius: 14px; }
+    .manual { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .manual .field { flex: 1; min-width: 160px; width: auto; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./"><span class="brand-dot"></span><span>drift<b>chat</b></span>&nbsp;<span class="muted" style="font-size:14px">admin</span></a>
+    <button class="link-btn" id="logout" hidden>Log out</button>
+  </header>
+
+  <div class="login card" id="login">
+    <h2 style="margin-top:0">Moderator login</h2>
+    <form id="loginForm">
+      <input type="password" id="pw" placeholder="Admin password" autocomplete="current-password" required>
+      <button class="btn btn-new" style="width:100%;margin-top:10px">Enter</button>
+      <p class="form-error" id="loginErr"></p>
+    </form>
+  </div>
+
+  <div class="wrap" id="panel" hidden>
+    <div class="stats">
+      <div class="stat"><b id="sOnline">0</b><span>online</span></div>
+      <div class="stat"><b id="sText">0</b><span>waiting · text</span></div>
+      <div class="stat"><b id="sVideo">0</b><span>waiting · video</span></div>
+      <div class="stat"><b id="sReports">0</b><span>open reports</span></div>
+      <div class="stat"><b id="sBans">0</b><span>active bans</span></div>
+    </div>
+
+    <h2>Reports</h2>
+    <div id="reports"></div>
+
+    <h2>Bans</h2>
+    <div id="bans"></div>
+    <form class="manual" id="manualBan">
+      <input class="field" name="ip" placeholder="IP address" required>
+      <input class="field" name="reason" placeholder="Reason">
+      <select class="field" name="hours" style="flex:0 0 150px">
+        <option value="24">24 hours</option>
+        <option value="168">7 days</option>
+        <option value="0">Permanent</option>
+      </select>
+      <button class="btn btn-danger">Ban IP</button>
+    </form>
+  </div>
+
+<script src="config.js"></script>
+<script>
+(() => {
+  const SERVER = (window.DRIFTCHAT_SERVER || '').replace(/\/$/, '');
+  const $ = id => document.getElementById(id);
+  let key = sessionStorage.getItem('dc_admin') || '';
+  const REASONS = { underage: 'Under 18', sexual: 'Sexual content', harassment: 'Harassment', spam: 'Spam / bot', other: 'Other' };
+
+  async function api(path, body) {
+    const res = await fetch(SERVER + path, {
+      method: body ? 'POST' : 'GET',
+      headers: { 'x-admin-key': key, 'content-type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (res.status === 401) { logout(); throw new Error('unauthorized'); }
+    return res.json();
+  }
+
+  function logout() {
+    key = ''; sessionStorage.removeItem('dc_admin');
+    $('panel').hidden = true; $('logout').hidden = true; $('login').hidden = false;
+  }
+  $('logout').onclick = logout;
+
+  $('loginForm').onsubmit = async e => {
+    e.preventDefault();
+    key = $('pw').value;
+    try { await refresh(); sessionStorage.setItem('dc_admin', key); }
+    catch { $('loginErr').textContent = 'Wrong password.'; }
+  };
+
+  const h = (tag, props = {}, ...kids) => {
+    const n = document.createElement(tag);
+    Object.assign(n, props);
+    kids.flat().forEach(k => n.append(k instanceof Node ? k : document.createTextNode(String(k))));
+    return n;
+  };
+  const btn = (label, cls, fn) => h('button', { className: 'btn ' + cls, onclick: fn }, label);
+
+  async function refresh() {
+    const s = await api('/api/admin/state');
+    $('login').hidden = true; $('panel').hidden = false; $('logout').hidden = false;
+    $('sOnline').textContent = s.online;
+    $('sText').textContent = s.queued.text;
+    $('sVideo').textContent = s.queued.video;
+    $('sReports').textContent = s.reports.length;
+    $('sBans').textContent = Object.keys(s.bans).length;
+
+    // reports
+    const wrap = $('reports');
+    wrap.replaceChildren();
+    if (!s.reports.length) wrap.append(h('div', { className: 'empty' }, 'No open reports. 🎉'));
+    const bannedIps = new Set(Object.keys(s.bans));
+    for (const r of s.reports) {
+      const transcript = h('div', { className: 'transcript' },
+        r.log.length
+          ? r.log.map(m => h('div', { className: m.who === 'reported' ? 'r' : 's' }, `${m.who === 'reported' ? 'Reported' : 'Reporter'}: ${m.text}`))
+          : h('div', { className: 'muted' }, '(no messages — probably a video-only report)'));
+      const ban = hours => async () => {
+        await api('/api/admin/ban', { ip: r.reportedIp, reason: REASONS[r.reason] || r.reason, hours, reportId: r.id });
+        refresh();
+      };
+      wrap.append(h('div', { className: 'report' },
+        h('div', { className: 'report-head' },
+          h('div', {}, h('span', { className: 'tag' }, REASONS[r.reason] || r.reason), h('span', { className: 'tag mode' }, r.mode)),
+          h('span', { className: 'muted', style: 'font-size:12.5px' }, new Date(r.at).toLocaleString())),
+        h('div', { className: 'meta' }, 'Reported IP: ', h('code', {}, r.reportedIp), bannedIps.has(r.reportedIp) ? '  (already banned)' : '', '   ·   Reporter: ', h('code', {}, r.reporterIp)),
+        r.details ? h('p', { className: 'details' }, `“${r.details}”`) : '',
+        transcript,
+        h('div', { className: 'actions' },
+          btn('Ban 24h', 'btn-danger', ban(24)),
+          btn('Ban 7d', 'btn-danger', ban(168)),
+          btn('Ban forever', 'btn-danger', ban(0)),
+          btn('Ban reporter (false report)', 'btn-ghost', async () => {
+            await api('/api/admin/ban', { ip: r.reporterIp, reason: 'False reporting', hours: 24, reportId: r.id }); refresh();
+          }),
+          btn('Dismiss', 'btn-ghost', async () => { await api('/api/admin/dismiss', { id: r.id }); refresh(); }),
+        )));
+    }
+
+    // bans
+    const bw = $('bans');
+    bw.replaceChildren();
+    const entries = Object.entries(s.bans);
+    if (!entries.length) bw.append(h('div', { className: 'empty' }, 'Nobody is banned.'));
+    else bw.append(h('table', {},
+      h('tr', {}, h('th', {}, 'IP'), h('th', {}, 'Reason'), h('th', {}, 'Banned'), h('th', {}, 'Ends'), h('th', {}, '')),
+      entries.map(([ip, b]) => h('tr', {},
+        h('td', {}, h('code', {}, ip)), h('td', {}, b.reason), h('td', {}, new Date(b.at).toLocaleString()),
+        h('td', {}, b.until ? new Date(b.until).toLocaleString() : 'Never'),
+        h('td', {}, btn('Unban', 'btn-ghost', async () => { await api('/api/admin/unban', { ip }); refresh(); }))))));
+  }
+
+  $('manualBan').onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    await api('/api/admin/ban', { ip: fd.get('ip').trim(), reason: fd.get('reason') || 'Manual ban', hours: Number(fd.get('hours')) });
+    e.target.reset();
+    refresh();
+  };
+
+  if (key) refresh().catch(() => {});
+  setInterval(() => { if (key && !$('panel').hidden) refresh().catch(() => {}); }, 10000);
+})();
+</script>
+</body>
+</html>

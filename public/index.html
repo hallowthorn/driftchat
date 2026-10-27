@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cut">
+  <title>Driftchat — talk to strangers</title>
+  <meta name="description" content="Random text and video chat with strangers. Add interests to meet people who like what you like.">
+  <meta name="theme-color" content="#0d0f14">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ff6b3d'/%3E%3Ccircle cx='11' cy='14' r='2.5' fill='%230d0f14'/%3E%3Ccircle cx='21' cy='14' r='2.5' fill='%230d0f14'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" id="brand">
+      <span class="brand-dot"></span><span>drift<b>chat</b></span>
+    </a>
+    <div class="online"><span class="pulse"></span><span id="onlineCount">—</span> online</div>
+  </header>
+
+  <!-- ============ HOME ============ -->
+  <main id="home" class="home">
+    <section class="hero">
+      <h1>Talk to <span class="hl">someone new.</span></h1>
+      <p class="sub">One click and you're chatting with a random stranger. Add interests to find people who like the same stuff. Hit <kbd>Esc</kbd> to skip.</p>
+
+      <div class="card">
+        <label class="label" for="interestInput">What are you into? <span class="muted">(optional)</span></label>
+        <div class="chips" id="chips">
+          <input id="interestInput" type="text" maxlength="30" placeholder="minecraft, anime, music…" autocomplete="off">
+        </div>
+        <p class="hint">Press Enter to add. If nobody shares an interest within 10s, you'll match with anyone.</p>
+
+        <label class="agree">
+          <input type="checkbox" id="ageCheck">
+          <span>I'm <b>18 or older</b> and agree to the <a href="#" id="rulesLink">rules</a>.</span>
+        </label>
+
+        <div class="start-row">
+          <button class="btn btn-big btn-text" id="startText">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            Text
+          </button>
+          <button class="btn btn-big btn-video" id="startVideo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 10l5-3v10l-5-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            Video
+          </button>
+        </div>
+        <p class="form-error" id="homeError" role="alert"></p>
+      </div>
+    </section>
+
+    <section class="rules" id="rules">
+      <h2>House rules</h2>
+      <ul>
+        <li>18+ only. Anyone who appears underage gets reported and banned.</li>
+        <li>No nudity or sexual content on camera.</li>
+        <li>No harassment, hate, threats, doxxing, spam or scam links.</li>
+        <li>Don't share personal info you wouldn't put on a billboard.</li>
+        <li>Chats aren't stored unless someone reports them. Reports are reviewed by a human.</li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- ============ CHAT ============ -->
+  <main id="chat" class="chat" hidden>
+    <section class="videos" id="videos" hidden>
+      <div class="vid remote">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="vid-overlay" id="remoteOverlay"><div class="spinner"></div><span id="remoteOverlayText">Looking for someone…</span></div>
+        <span class="vid-tag">Stranger</span>
+      </div>
+      <div class="vid local">
+        <video id="localVideo" autoplay playsinline muted></video>
+        <span class="vid-tag">You</span>
+        <div class="vid-controls">
+          <button class="icon-btn" id="micBtn" title="Mute mic" aria-pressed="false">
+            <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <button class="icon-btn" id="camBtn" title="Turn camera off" aria-pressed="false">
+            <svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 10l5-3v10l-5-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="chatpane">
+      <div class="chatbar">
+        <span class="status" id="statusText">Connecting…</span>
+        <div class="chatbar-actions">
+          <button class="link-btn" id="saveLogBtn" title="Download this chat as a text file">Save log</button>
+          <button class="link-btn danger" id="reportBtn">Report</button>
+        </div>
+      </div>
+      <div class="log" id="log" aria-live="polite"></div>
+      <div class="typing" id="typing" hidden><span></span><span></span><span></span> Stranger is typing</div>
+      <form class="composer" id="composer" autocomplete="off">
+        <button type="button" class="skip" id="skipBtn"><span id="skipLabel">Stop</span><kbd>Esc</kbd></button>
+        <textarea id="input" rows="1" maxlength="1000" placeholder="Type a message…" disabled></textarea>
+        <button type="submit" class="send" id="sendBtn" disabled>Send<kbd>↵</kbd></button>
+      </form>
+    </section>
+  </main>
+
+  <!-- ============ REPORT ============ -->
+  <dialog id="reportDialog" class="dialog">
+    <form method="dialog" id="reportForm">
+      <h3>Report this stranger</h3>
+      <p class="muted">The chat text and their connection get sent to a moderator.</p>
+      <div class="reasons">
+        <label><input type="radio" name="reason" value="underage" required> Appears to be under 18</label>
+        <label><input type="radio" name="reason" value="sexual"> Unwanted nudity / sexual content</label>
+        <label><input type="radio" name="reason" value="harassment"> Harassment, hate or threats</label>
+        <label><input type="radio" name="reason" value="spam"> Spam, bot or scam</label>
+        <label><input type="radio" name="reason" value="other"> Something else</label>
+      </div>
+      <textarea name="details" maxlength="500" rows="3" placeholder="Anything else? (optional)"></textarea>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" id="reportCancel">Cancel</button>
+        <button type="submit" class="btn btn-danger" value="send">Send report</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ============ BANNED ============ -->
+  <div class="banned" id="banned" hidden>
+    <div class="banned-card">
+      <h2>You've been banned</h2>
+      <p id="bannedReason"></p>
+      <p class="muted" id="bannedUntil"></p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" crossorigin="anonymous"></script>
+  <script src="app.js"></script>
+</body>
+</html>

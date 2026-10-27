@@ -1,0 +1,17 @@
+# Render blueprint for the Driftchat chat server (free tier).
+# Render dashboard → New → Blueprint → pick this repo.
+services:
+  - type: web
+    name: driftchat
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: ADMIN_PASSWORD
+        generateValue: true          # random password, shown in the Render dashboard
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ALLOWED_ORIGINS
+        value: https://hallowthorn.github.io

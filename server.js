@@ -12,6 +12,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme';
 const TRUST_PROXY = process.env.TRUST_PROXY === '1';           // set when behind nginx/Cloudflare/Render etc.
 const MAX_MSG_LEN = 1000;
+const MAX_LOG = 1000;              // messages kept per chat for report review
 const DATA_DIR = path.join(__dirname, 'data');
 // Sites allowed to connect when the frontend is hosted elsewhere (e.g. GitHub Pages).
 // Comma-separated, e.g. "https://hallowthorn.github.io". "*" allows any site.
@@ -399,6 +400,7 @@ function endChat(socket) {
   const p = socket.data.partner;
   if (!p) return;
   const room = socket.data.room;
+  room.endedAt = Date.now();
   stats.chatsEnded++;
   stats.chatMsTotal += Date.now() - room.startedAt;
   socket.data.partner = null; p.data.partner = null;
@@ -507,21 +509,28 @@ io.on('connection', socket => {
     if (socket.data.msgTimes.length >= settings.msgRateLimit) return socket.emit('notice', 'Slow down a little.');
     socket.data.msgTimes.push(now);
 
+    let shown = text, blocked = false;
     if (wordRe) {
       const filtered = text.replace(wordRe, m => '*'.repeat(m.length));
       if (filtered !== text) {
-        if (settings.filterMode === 'block') return socket.emit('notice', "That message wasn't sent — it has a blocked word.");
-        text = filtered;
+        if (settings.filterMode === 'block') blocked = true;
+        else shown = filtered;
       }
     }
 
+    // full transcript kept with the chat so a report can show everything from the start
+    const room = socket.data.room;
+    const entry = { from: socket.id, text: shown, t: now };
+    if (shown !== text || blocked) entry.original = text;
+    if (blocked) entry.blocked = true;
+    room.log.push(entry);
+    if (room.log.length > MAX_LOG) { room.log.shift(); room.truncated = true; }
+
+    if (blocked) return socket.emit('notice', "That message wasn't sent — it has a blocked word.");
     socket.data.msgCount++;
     stats.messages++;
     bucket().messages++;
-    const log = socket.data.room.log;
-    log.push({ from: socket.id, text, t: now });
-    if (log.length > 200) log.shift();
-    p.emit('message', text);
+    p.emit('message', shown);
   });
 
   socket.on('typing', isTyping => {
@@ -560,7 +569,15 @@ io.on('connection', socket => {
       mode: room.mode,
       reporterIp: ip,
       reportedIp,
-      log: room.log.map(m => ({ who: m.from === socket.id ? 'reporter' : 'reported', text: m.text, t: m.t })),
+      chatStartedAt: room.startedAt,
+      chatEndedAt: room.endedAt || null,   // null = reported while the chat was still going
+      truncated: !!room.truncated,
+      log: room.log.map(m => ({
+        who: m.from === socket.id ? 'reporter' : 'reported',
+        text: m.text, t: m.t,
+        ...(m.original ? { original: m.original } : {}),
+        ...(m.blocked ? { blocked: true } : {}),
+      })),
     });
     if (reports.length > 2000) reports = reports.slice(-2000);
     save('reports.json', reports);

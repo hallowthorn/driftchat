@@ -77,7 +77,16 @@
     .details { margin: 10px 0 0; font-size: 14px; }
     .transcript { margin-top: 10px; background: var(--bg); border-radius: 10px; padding: 10px 12px; max-height: 220px; overflow-y: auto; font-size: 13.5px; }
     .transcript div { margin: 2px 0; white-space: pre-wrap; word-break: break-word; }
+    .transcript { max-height: 420px; }
     .transcript .r { color: #ffb39b; } .transcript .s { color: #9dbfff; }
+    .ts-summary { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
+    .ts-line { display: grid; grid-template-columns: 44px 70px 1fr; gap: 8px; padding: 2px 0; }
+    .ts-time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; padding-top: 1px; }
+    .ts-who { font-weight: 600; font-size: 12px; padding-top: 1px; }
+    .ts-text { color: var(--text); }
+    .ts-flag { color: var(--accent-2); font-size: 12px; }
+    .ts-marker { color: var(--muted); font-size: 12px; text-align: center; margin: 6px 0 !important; }
+    .ts-marker.ts-reported { color: var(--danger); font-weight: 600; }
     .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
     .actions .btn { padding: 8px 12px; font-size: 13px; }
     .empty { color: var(--muted); padding: 20px; text-align: center; border: 1px dashed var(--line); border-radius: 14px; }
@@ -495,12 +504,43 @@
           btn('Ban', 'btn-danger mini', () => act.ban(u.ip, 24)))))))));
   }
 
+  // Full conversation from the moment they matched up to the report, with timing.
+  const clock = ms => {
+    const s = Math.max(0, Math.round(ms / 1000));
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  };
+  function transcriptView(r) {
+    const start = r.chatStartedAt || r.log[0]?.t || r.at;
+    const end = r.chatEndedAt || r.at;
+    const counts = { reporter: 0, reported: 0 };
+    r.log.forEach(m => counts[m.who]++);
+    const legacy = !r.chatStartedAt;   // reports filed before chat timing was recorded
+    const summary = legacy
+      ? h('div', { className: 'ts-summary' }, `${r.log.length} messages · older report, no chat timing recorded`)
+      : h('div', { className: 'ts-summary' },
+      `Chat started ${new Date(start).toLocaleTimeString()} · lasted ${clock(end - start)} · `,
+      `${r.log.length} messages (${counts.reported} from reported, ${counts.reporter} from reporter)`,
+      r.chatEndedAt ? ` · reported ${clock(r.at - r.chatEndedAt)} after it ended` : ' · reported during the chat');
+    const lines = [
+      h('div', { className: 'ts-marker' }, '— Matched —'),
+      r.truncated ? h('div', { className: 'ts-marker' }, '(earliest messages were cut — chat went over 1,000 messages)') : '',
+      ...r.log.map(m => h('div', { className: 'ts-line ' + (m.who === 'reported' ? 'r' : 's') },
+        h('span', { className: 'ts-time' }, clock(m.t - start)),
+        h('span', { className: 'ts-who' }, m.who === 'reported' ? 'Reported' : 'Reporter'),
+        h('span', { className: 'ts-text' }, m.text,
+          m.blocked ? h('span', { className: 'ts-flag' }, ' [blocked by filter — not delivered]') : '',
+          m.original && !m.blocked ? h('span', { className: 'ts-flag' }, ` [filtered — original: “${m.original}”]`) : '',
+          m.blocked && m.original ? h('span', { className: 'ts-flag' }, ` original: “${m.original}”`) : ''))),
+      r.log.length ? '' : h('div', { className: 'muted', style: 'padding:6px 0' }, r.mode === 'video' ? 'Nothing was typed. Video isn’t recorded, so there’s nothing else to review.' : 'Nothing was typed in this chat.'),
+      r.chatEndedAt ? h('div', { className: 'ts-marker' }, `— Chat ended · ${clock(r.chatEndedAt - start)} —`) : '',
+      h('div', { className: 'ts-marker ts-reported' }, legacy ? '— Reported here —' : `— Reported here · ${clock(r.at - start)} —`),
+    ];
+    return h('div', {}, summary, h('div', { className: 'transcript' }, lines));
+  }
+
   function reportCard(r, { compact } = {}) {
     const banned = !!S?.bans[r.reportedIp];
-    const transcript = h('div', { className: 'transcript' },
-      r.log.length
-        ? r.log.map(m => h('div', { className: m.who === 'reported' ? 'r' : 's' }, `${m.who === 'reported' ? 'Reported' : 'Reporter'}: ${m.text}`))
-        : h('div', { className: 'muted' }, '(no messages — probably a video-only report)'));
+    const transcript = transcriptView(r);
     const ban = hours => async () => {
       await api('/api/admin/ban', { ip: r.reportedIp, reason: REASONS[r.reason] || r.reason, hours, reportId: r.id });
       toast('Banned.'); refresh(); if (compact) $('lookupDialog').close();

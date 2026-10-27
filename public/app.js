@@ -96,7 +96,7 @@
 
   async function start(mode) {
     el.homeError.textContent = '';
-    if (staticHost && !SERVER) return homeError('This site has no chat server configured yet (set DRIFTCHAT_SERVER).');
+    if (staticHost && !SERVER) return homeError("Couldn't find the chat server — refresh the page (Ctrl+Shift+R).");
     if (!socket.connected) return homeError('Waking up the chat server… try again in a few seconds.');
     if (!el.ageCheck.checked) return homeError('Tick the 18+ box to continue.');
     try { localStorage.setItem('dc_age', '1'); } catch {}

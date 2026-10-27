@@ -32,6 +32,14 @@ jobs:
           node -e "require('fs').writeFileSync('public/config.js', 'window.DRIFTCHAT_SERVER = ' + JSON.stringify(process.env.DRIFTCHAT_SERVER || '') + ';\n')"
           cat public/config.js
 
+      # Cache-bust: GitHub Pages caches files for 10 minutes, so stamp each deploy's
+      # script/style URLs with the run id; visitors always get the matching set.
+      - name: Version asset URLs
+        run: |
+          v=${{ github.run_id }}
+          sed -i -E "s#(src|href)=\"(config\.js|app\.js|style\.css)\"#\1=\"\2?v=$v\"#g" public/index.html public/admin.html
+          grep -n "?v=" public/index.html public/admin.html
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

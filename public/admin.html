@@ -9,14 +9,65 @@
   <link rel="stylesheet" href="style.css">
   <style>
     body { display: block; overflow-y: auto; }
-    .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 16px 60px; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
     .login { max-width: 360px; margin: 80px auto; }
-    .login input, .field { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
-    .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
-    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; min-width: 130px; }
+    .field { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
+    textarea.field { resize: vertical; }
+    .login .field { padding: 12px; }
+
+    .tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin-bottom: 20px; position: sticky; top: 59px; background: var(--bg); z-index: 3; padding-top: 6px; }
+    .tab { background: none; border: 0; color: var(--muted); font: 600 14px var(--font); padding: 10px 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tab:hover { color: var(--text); }
+    .tab.on { color: var(--text); border-bottom-color: var(--accent); }
+    .tab .count { background: var(--danger); color: #fff; border-radius: 999px; font-size: 11px; padding: 1px 7px; margin-left: 6px; }
+    .tab .count:empty { display: none; }
+    .pane[hidden] { display: none !important; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
     .stat b { display: block; font: 800 26px var(--display); }
     .stat span { color: var(--muted); font-size: 12.5px; }
-    h2 { font: 700 20px var(--display); margin: 28px 0 12px; }
+    h2 { font: 700 19px var(--display); margin: 24px 0 10px; }
+    h2:first-child { margin-top: 0; }
+    .card2 { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+    .card2 h3 { font: 700 16px var(--display); margin: 0 0 4px; }
+    .card2 p.muted { font-size: 13px; margin: 0 0 10px; }
+    .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+
+    .chart { display: flex; align-items: flex-end; gap: 3px; height: 110px; padding: 10px 0 0; }
+    .chart .bar { flex: 1; background: linear-gradient(var(--accent), #ff8a3d); border-radius: 4px 4px 0 0; min-height: 2px; position: relative; }
+    .chart .bar:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); font-size: 11px; padding: 3px 6px; border-radius: 5px; white-space: nowrap; margin-bottom: 4px; }
+    .chart-axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+    .toggles { display: grid; gap: 8px; }
+    .toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: var(--bg-2); border-radius: 10px; }
+    .toggle span small { display: block; color: var(--muted); font-size: 12px; }
+    .switch { position: relative; width: 44px; height: 24px; flex: none; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch i { position: absolute; inset: 0; background: #2a2f3d; border-radius: 999px; cursor: pointer; transition: .15s; }
+    .switch i::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .15s; }
+    .switch input:checked + i { background: var(--ok); }
+    .switch input:checked + i::before { transform: translateX(20px); }
+    .switch.danger input:checked + i { background: var(--danger); }
+
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    .toolbar .field { width: auto; flex: 1; min-width: 160px; }
+    .toolbar select.field { flex: 0 0 auto; }
+    .tablewrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    td, th { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    tr:last-child td { border-bottom: 0; }
+    th { color: var(--muted); font-weight: 500; white-space: nowrap; }
+    td code { font-size: 12.5px; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: #2a2f3d; color: var(--muted); }
+    .pill.chatting { background: rgba(51,214,159,.15); color: var(--ok); }
+    .pill.searching { background: rgba(255,181,71,.15); color: var(--accent-2); }
+    .pill.video { background: rgba(76,141,255,.15); color: #9dbfff; }
+    .pill.bad { background: rgba(255,77,106,.15); color: #ff9aac; }
+    .row-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+    .mini { padding: 5px 9px !important; font-size: 12px !important; border-radius: 8px !important; }
+    .linkish { background: none; border: 0; color: var(--accent-2); cursor: pointer; font: inherit; padding: 0; text-decoration: underline dotted; }
+
     .report { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
     .report-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
     .tag { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(255,77,106,.15); color: #ff9aac; margin-right: 6px; }
@@ -29,54 +80,250 @@
     .transcript .r { color: #ffb39b; } .transcript .s { color: #9dbfff; }
     .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
     .actions .btn { padding: 8px 12px; font-size: 13px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-    td, th { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
-    th { color: var(--muted); font-weight: 500; }
     .empty { color: var(--muted); padding: 20px; text-align: center; border: 1px dashed var(--line); border-radius: 14px; }
-    .manual { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-    .manual .field { flex: 1; min-width: 160px; width: auto; }
+    .form-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .form-row .field { flex: 1; min-width: 140px; width: auto; }
+    label.lbl { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 5px; }
+    .saved { color: var(--ok); font-size: 13px; margin-left: 8px; opacity: 0; transition: opacity .2s; }
+    .saved.show { opacity: 1; }
+    .lookup-section { margin-top: 14px; }
+    .lookup-section h4 { margin: 0 0 6px; font-size: 14px; }
+    .dialog.wide { width: min(720px, calc(100vw - 32px)); max-height: 85vh; }
+    @media (max-width: 640px) { .tabs { top: 55px; } .tab { padding: 9px 10px; font-size: 13px; } #lastSync { display: none; } }
   </style>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="./"><span class="brand-dot"></span><span>drift<b>chat</b></span>&nbsp;<span class="muted" style="font-size:14px">admin</span></a>
-    <button class="link-btn" id="logout" hidden>Log out</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="muted" id="lastSync" style="font-size:12px"></span>
+      <button class="link-btn" id="logout" hidden>Log out</button>
+    </div>
   </header>
 
   <div class="login card" id="login">
     <h2 style="margin-top:0">Moderator login</h2>
     <form id="loginForm">
-      <input type="password" id="pw" placeholder="Admin password" autocomplete="current-password" required>
+      <input class="field" type="password" id="pw" placeholder="Admin password" autocomplete="current-password" required>
       <button class="btn btn-new" style="width:100%;margin-top:10px">Enter</button>
       <p class="form-error" id="loginErr"></p>
     </form>
   </div>
 
   <div class="wrap" id="panel" hidden>
-    <div class="stats">
-      <div class="stat"><b id="sOnline">0</b><span>online</span></div>
-      <div class="stat"><b id="sText">0</b><span>waiting · text</span></div>
-      <div class="stat"><b id="sVideo">0</b><span>waiting · video</span></div>
-      <div class="stat"><b id="sReports">0</b><span>open reports</span></div>
-      <div class="stat"><b id="sBans">0</b><span>active bans</span></div>
-    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab on" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="live">Live <span class="count" id="cLive" style="background:var(--ok);color:#06251a"></span></button>
+      <button class="tab" data-tab="reports">Reports <span class="count" id="cReports"></span></button>
+      <button class="tab" data-tab="bans">Bans</button>
+      <button class="tab" data-tab="controls">Site controls</button>
+      <button class="tab" data-tab="data">Lookup &amp; data</button>
+    </nav>
 
-    <h2>Reports</h2>
-    <div id="reports"></div>
+    <!-- ===== OVERVIEW ===== -->
+    <section class="pane" id="pane-overview">
+      <div class="stats">
+        <div class="stat"><b id="sOnline">0</b><span>online now</span></div>
+        <div class="stat"><b id="sActive">0</b><span>active chats</span></div>
+        <div class="stat"><b id="sText">0</b><span>waiting · text</span></div>
+        <div class="stat"><b id="sVideo">0</b><span>waiting · video</span></div>
+        <div class="stat"><b id="sPeak">0</b><span>peak online</span></div>
+        <div class="stat"><b id="sChats">0</b><span>chats started</span></div>
+        <div class="stat"><b id="sMsgs">0</b><span>messages sent</span></div>
+        <div class="stat"><b id="sAvg">0s</b><span>avg chat length</span></div>
+        <div class="stat"><b id="sReports">0</b><span>open reports</span></div>
+        <div class="stat"><b id="sBans">0</b><span>active bans</span></div>
+      </div>
+      <div class="grid2">
+        <div class="card2">
+          <h3>Chats per hour</h3>
+          <p class="muted" id="uptime"></p>
+          <div class="chart" id="chart"></div>
+          <div class="chart-axis"><span id="chartStart"></span><span>now</span></div>
+        </div>
+        <div class="card2">
+          <h3>Quick switches</h3>
+          <p class="muted">Take effect instantly for everyone.</p>
+          <div class="toggles">
+            <label class="toggle"><span>Text chat<small>Let people start text chats</small></span><span class="switch"><input type="checkbox" data-setting="textEnabled"><i></i></span></label>
+            <label class="toggle"><span>Video chat<small>Let people start video chats</small></span><span class="switch"><input type="checkbox" data-setting="videoEnabled"><i></i></span></label>
+            <label class="toggle"><span>Maintenance mode<small>Ends every chat and blocks new ones</small></span><span class="switch danger"><input type="checkbox" data-setting="maintenance"><i></i></span></label>
+          </div>
+        </div>
+      </div>
+      <p class="muted" style="font-size:12.5px">Stats count since the server last started. On Render's free plan that's every time it wakes up.</p>
+    </section>
 
-    <h2>Bans</h2>
-    <div id="bans"></div>
-    <form class="manual" id="manualBan">
-      <input class="field" name="ip" placeholder="IP address" required>
-      <input class="field" name="reason" placeholder="Reason">
-      <select class="field" name="hours" style="flex:0 0 150px">
-        <option value="24">24 hours</option>
-        <option value="168">7 days</option>
-        <option value="0">Permanent</option>
-      </select>
-      <button class="btn btn-danger">Ban IP</button>
-    </form>
+    <!-- ===== LIVE ===== -->
+    <section class="pane" id="pane-live" hidden>
+      <h2>Active chats</h2>
+      <div id="chats"></div>
+
+      <h2>Everyone online</h2>
+      <div class="toolbar">
+        <input class="field" id="userSearch" placeholder="Search IP or interest…">
+        <select class="field" id="userFilter">
+          <option value="">All statuses</option>
+          <option value="chatting">Chatting</option>
+          <option value="searching">Searching</option>
+          <option value="idle">Idle</option>
+        </select>
+      </div>
+      <div id="users"></div>
+      <p class="muted" style="font-size:12.5px">Live messages are never shown here. You only see a chat's text if someone reports it.</p>
+    </section>
+
+    <!-- ===== REPORTS ===== -->
+    <section class="pane" id="pane-reports" hidden>
+      <div class="toolbar">
+        <select class="field" id="reportFilter">
+          <option value="">All reasons</option>
+          <option value="underage">Under 18</option>
+          <option value="sexual">Sexual content</option>
+          <option value="harassment">Harassment</option>
+          <option value="spam">Spam / bot</option>
+          <option value="other">Other</option>
+        </select>
+        <input class="field" id="reportSearch" placeholder="Search IP or text…">
+        <button class="btn btn-ghost" id="dismissAll">Dismiss all</button>
+      </div>
+      <div id="reports"></div>
+    </section>
+
+    <!-- ===== BANS ===== -->
+    <section class="pane" id="pane-bans" hidden>
+      <div class="card2">
+        <h3>Ban an IP</h3>
+        <form class="form-row" id="manualBan">
+          <input class="field" name="ip" placeholder="IP address" required>
+          <input class="field" name="reason" placeholder="Reason">
+          <select class="field" name="hours" style="flex:0 0 140px">
+            <option value="1">1 hour</option>
+            <option value="24" selected>24 hours</option>
+            <option value="168">7 days</option>
+            <option value="720">30 days</option>
+            <option value="0">Permanent</option>
+          </select>
+          <button class="btn btn-danger">Ban</button>
+        </form>
+      </div>
+      <div class="toolbar">
+        <input class="field" id="banSearch" placeholder="Search bans…">
+        <button class="btn btn-ghost" id="unbanAll">Unban everyone</button>
+      </div>
+      <div id="bans"></div>
+    </section>
+
+    <!-- ===== CONTROLS ===== -->
+    <section class="pane" id="pane-controls" hidden>
+      <div class="grid2">
+        <div class="card2">
+          <h3>Broadcast</h3>
+          <p class="muted">One-time message to everyone online right now. Shows in their chat, or as a popup on the home screen.</p>
+          <form id="broadcastForm">
+            <textarea class="field" name="message" rows="2" maxlength="300" placeholder="Heads up: server restart in 5 minutes" required></textarea>
+            <div class="form-row"><button class="btn btn-new">Send to everyone</button><span class="saved" id="broadcastOk"></span></div>
+          </form>
+        </div>
+        <div class="card2">
+          <h3>Announcement banner</h3>
+          <p class="muted">Stays at the top of the site until you clear it. People can dismiss it.</p>
+          <form id="announceForm">
+            <textarea class="field" name="announcement" rows="2" maxlength="300" placeholder="New: video chat is live!"></textarea>
+            <div class="form-row">
+              <button class="btn btn-new">Save banner</button>
+              <button type="button" class="btn btn-ghost" id="clearAnnounce">Clear</button>
+              <span class="saved" id="announceOk">Saved</span>
+            </div>
+          </form>
+        </div>
+        <div class="card2">
+          <h3>Maintenance</h3>
+          <p class="muted">The message people see while maintenance mode is on (switch is on Overview).</p>
+          <form id="maintForm">
+            <textarea class="field" name="maintenanceMsg" rows="2" maxlength="300"></textarea>
+            <div class="form-row">
+              <button class="btn btn-new">Save message</button>
+              <label class="toggle" style="padding:6px 10px;flex:1"><span>Maintenance on</span><span class="switch danger"><input type="checkbox" data-setting="maintenance"><i></i></span></label>
+              <span class="saved" id="maintOk">Saved</span>
+            </div>
+          </form>
+        </div>
+        <div class="card2">
+          <h3>Word filter</h3>
+          <p class="muted">One word or phrase per line. Matches whole words, any capitalization.</p>
+          <form id="filterForm">
+            <textarea class="field" name="bannedWords" rows="5" placeholder="badword&#10;another phrase"></textarea>
+            <label class="lbl">When a message has a blocked word</label>
+            <select class="field" name="filterMode">
+              <option value="mask">Replace it with ****</option>
+              <option value="block">Don't send the message</option>
+            </select>
+            <div class="form-row"><button class="btn btn-new">Save filter</button><span class="saved" id="filterOk">Saved</span></div>
+          </form>
+        </div>
+        <div class="card2">
+          <h3>Matching &amp; safety</h3>
+          <form id="tuneForm">
+            <label class="lbl">Auto-ban after reports from this many different people in 24h <span class="muted">(0 = off)</span></label>
+            <input class="field" type="number" name="autoBanReports" min="0" max="100">
+            <label class="lbl">Seconds to wait for an interest match before going random</label>
+            <input class="field" type="number" name="interestTimeoutSec" min="0" max="120">
+            <label class="lbl">Max messages per user every 3 seconds</label>
+            <input class="field" type="number" name="msgRateLimit" min="1" max="50">
+            <div class="form-row"><button class="btn btn-new">Save</button><span class="saved" id="tuneOk">Saved</span></div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== LOOKUP & DATA ===== -->
+    <section class="pane" id="pane-data" hidden>
+      <div class="card2">
+        <h3>IP lookup</h3>
+        <p class="muted">Everything on file for one IP: ban status, who's online from it, reports against it and reports it filed.</p>
+        <form class="form-row" id="lookupForm">
+          <input class="field" name="ip" placeholder="IP address" required>
+          <button class="btn btn-new">Look up</button>
+        </form>
+      </div>
+      <div class="grid2">
+        <div class="card2">
+          <h3>Export</h3>
+          <p class="muted">Download bans, reports and settings as a JSON file. Do this before Render restarts if you want to keep bans.</p>
+          <button class="btn btn-new" id="exportBtn">Download export</button>
+        </div>
+        <div class="card2">
+          <h3>Import</h3>
+          <p class="muted">Restore bans (and settings) from an export file. Existing bans are kept.</p>
+          <input type="file" id="importFile" accept="application/json,.json" class="field">
+          <label class="toggle" style="margin-top:8px"><span>Also restore settings</span><span class="switch"><input type="checkbox" id="importSettings"><i></i></span></label>
+          <div class="form-row"><button class="btn btn-new" id="importBtn">Import</button><span class="saved" id="importOk"></span></div>
+        </div>
+      </div>
+    </section>
   </div>
+
+  <!-- prompt dialog (warn / kick reason) -->
+  <dialog class="dialog" id="askDialog">
+    <form method="dialog" id="askForm">
+      <h3 id="askTitle"></h3>
+      <p class="muted" id="askHint"></p>
+      <textarea class="field" id="askText" rows="3" maxlength="300"></textarea>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" id="askCancel">Cancel</button>
+        <button class="btn btn-danger" id="askOk" value="ok">Send</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- IP lookup dialog -->
+  <dialog class="dialog wide" id="lookupDialog">
+    <div id="lookupBody"></div>
+    <div class="dialog-actions"><button class="btn btn-ghost" id="lookupClose">Close</button></div>
+  </dialog>
+
+  <div class="toast" id="toast" hidden></div>
 
 <script src="config.js"></script>
 <script>
@@ -84,103 +331,354 @@
   const SERVER = (window.DRIFTCHAT_SERVER || '').replace(/\/$/, '');
   const $ = id => document.getElementById(id);
   let key = sessionStorage.getItem('dc_admin') || '';
+  let S = null;              // last state from the server
+  let formsFilled = false;   // only fill settings forms once, so refreshes don't overwrite typing
   const REASONS = { underage: 'Under 18', sexual: 'Sexual content', harassment: 'Harassment', spam: 'Spam / bot', other: 'Other' };
 
-  async function api(path, body) {
+  // ---------- helpers ----------
+  async function api(path, body, method) {
     const res = await fetch(SERVER + path, {
-      method: body ? 'POST' : 'GET',
+      method: method || (body ? 'POST' : 'GET'),
       headers: { 'x-admin-key': key, 'content-type': 'application/json' },
       body: body ? JSON.stringify(body) : undefined,
     });
     if (res.status === 401) { logout(); throw new Error('unauthorized'); }
-    return res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { toast(data.error || 'Something went wrong.'); throw new Error(data.error); }
+    return data;
+  }
+  const h = (tag, props = {}, ...kids) => {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === 'dataset') Object.assign(n.dataset, v); else if (k in n) n[k] = v; else n.setAttribute(k, v);
+    }
+    kids.flat().forEach(k => k != null && k !== '' && n.append(k instanceof Node ? k : document.createTextNode(String(k))));
+    return n;
+  };
+  const btn = (label, cls, fn) => h('button', { className: 'btn ' + cls, type: 'button', onclick: fn }, label);
+  const ago = t => {
+    const s = Math.max(0, Math.round((Date.now() - t) / 1000));
+    if (s < 60) return s + 's';
+    if (s < 3600) return Math.floor(s / 60) + 'm';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
+    return Math.floor(s / 86400) + 'd';
+  };
+  const ipLink = ip => h('button', { className: 'linkish', onclick: () => lookup(ip), title: 'Look up this IP' }, h('code', {}, ip));
+  let toastTimer;
+  function toast(msg) {
+    $('toast').textContent = msg; $('toast').hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => ($('toast').hidden = true), 3000);
+  }
+  function flash(id, text = 'Saved') {
+    const e = $(id); e.textContent = text; e.classList.add('show');
+    setTimeout(() => e.classList.remove('show'), 2200);
+  }
+  function confirmDo(msg, fn) { return async () => { if (confirm(msg)) { await fn(); refresh(); } }; }
+
+  // reusable text prompt
+  function ask(title, hint, preset, okLabel) {
+    return new Promise(resolve => {
+      $('askTitle').textContent = title; $('askHint').textContent = hint;
+      $('askText').value = preset || ''; $('askOk').textContent = okLabel || 'Send';
+      const d = $('askDialog');
+      const done = v => { d.close(); resolve(v); };
+      $('askForm').onsubmit = e => { e.preventDefault(); done($('askText').value.trim()); };
+      $('askCancel').onclick = () => done(null);
+      d.oncancel = () => resolve(null);
+      d.showModal(); $('askText').focus();
+    });
   }
 
+  // ---------- auth ----------
   function logout() {
     key = ''; sessionStorage.removeItem('dc_admin');
     $('panel').hidden = true; $('logout').hidden = true; $('login').hidden = false;
   }
   $('logout').onclick = logout;
-
   $('loginForm').onsubmit = async e => {
     e.preventDefault();
     key = $('pw').value;
-    try { await refresh(); sessionStorage.setItem('dc_admin', key); }
-    catch { $('loginErr').textContent = 'Wrong password.'; }
+    try { await refresh(); sessionStorage.setItem('dc_admin', key); $('loginErr').textContent = ''; }
+    catch { $('loginErr').textContent = SERVER ? 'Wrong password, or the server is still waking up — try again in a few seconds.' : 'Wrong password.'; }
   };
 
-  const h = (tag, props = {}, ...kids) => {
-    const n = document.createElement(tag);
-    Object.assign(n, props);
-    kids.flat().forEach(k => n.append(k instanceof Node ? k : document.createTextNode(String(k))));
-    return n;
+  // ---------- tabs ----------
+  let currentTab = sessionStorage.getItem('dc_admin_tab') || 'overview';
+  function showTab(name) {
+    currentTab = name;
+    sessionStorage.setItem('dc_admin_tab', name);
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
+    document.querySelectorAll('.pane').forEach(p => (p.hidden = p.id !== 'pane-' + name));
+  }
+  $('tabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) showTab(t.dataset.tab); });
+  showTab(currentTab);
+
+  // ---------- user actions ----------
+  const act = {
+    warn: async u => {
+      const msg = await ask('Warn this user', `${u.ip} · they'll see a popup they have to acknowledge.`, 'Please follow the rules or you will be banned.');
+      if (msg) { await api('/api/admin/warn', { id: u.id, message: msg }); toast('Warning sent.'); }
+    },
+    end: async id => { await api('/api/admin/end-chat', { id }); toast('Chat ended.'); refresh(); },
+    kick: async u => {
+      const reason = await ask('Kick this user', `${u.ip} · disconnects them now. They can come back by reloading.`, 'Removed by a moderator.', 'Kick');
+      if (reason !== null) { await api('/api/admin/kick', { id: u.id, reason }); toast('Kicked.'); refresh(); }
+    },
+    ban: async (ip, hours) => {
+      const reason = await ask(`Ban ${ip}`, hours ? `For ${hours >= 24 ? hours / 24 + ' day(s)' : hours + ' hour(s)'}.` : 'Permanently.', 'Violation of rules', 'Ban');
+      if (reason !== null) { await api('/api/admin/ban', { ip, reason: reason || 'Violation of rules', hours }); toast('Banned.'); refresh(); }
+    },
   };
-  const btn = (label, cls, fn) => h('button', { className: 'btn ' + cls, onclick: fn }, label);
 
-  async function refresh() {
-    const s = await api('/api/admin/state');
-    $('login').hidden = true; $('panel').hidden = false; $('logout').hidden = false;
-    $('sOnline').textContent = s.online;
-    $('sText').textContent = s.queued.text;
-    $('sVideo').textContent = s.queued.video;
-    $('sReports').textContent = s.reports.length;
-    $('sBans').textContent = Object.keys(s.bans).length;
+  // ---------- render ----------
+  function renderOverview() {
+    const st = S.stats;
+    $('sOnline').textContent = S.online;
+    $('sActive').textContent = st.activeChats;
+    $('sText').textContent = S.queued.text;
+    $('sVideo').textContent = S.queued.video;
+    $('sPeak').textContent = st.peakOnline;
+    $('sChats').textContent = st.chats.toLocaleString();
+    $('sMsgs').textContent = st.messages.toLocaleString();
+    $('sAvg').textContent = st.avgChatSec >= 60 ? Math.floor(st.avgChatSec / 60) + 'm ' + (st.avgChatSec % 60) + 's' : st.avgChatSec + 's';
+    $('sReports').textContent = S.reports.length;
+    $('sBans').textContent = Object.keys(S.bans).length;
+    $('uptime').textContent = `Server up for ${ago(st.startedAt)}.`;
 
-    // reports
-    const wrap = $('reports');
-    wrap.replaceChildren();
-    if (!s.reports.length) wrap.append(h('div', { className: 'empty' }, 'No open reports. 🎉'));
-    const bannedIps = new Set(Object.keys(s.bans));
-    for (const r of s.reports) {
-      const transcript = h('div', { className: 'transcript' },
-        r.log.length
-          ? r.log.map(m => h('div', { className: m.who === 'reported' ? 'r' : 's' }, `${m.who === 'reported' ? 'Reported' : 'Reporter'}: ${m.text}`))
-          : h('div', { className: 'muted' }, '(no messages — probably a video-only report)'));
-      const ban = hours => async () => {
-        await api('/api/admin/ban', { ip: r.reportedIp, reason: REASONS[r.reason] || r.reason, hours, reportId: r.id });
-        refresh();
-      };
-      wrap.append(h('div', { className: 'report' },
-        h('div', { className: 'report-head' },
-          h('div', {}, h('span', { className: 'tag' }, REASONS[r.reason] || r.reason), h('span', { className: 'tag mode' }, r.mode)),
-          h('span', { className: 'muted', style: 'font-size:12.5px' }, new Date(r.at).toLocaleString())),
-        h('div', { className: 'meta' }, 'Reported IP: ', h('code', {}, r.reportedIp), bannedIps.has(r.reportedIp) ? '  (already banned)' : '', '   ·   Reporter: ', h('code', {}, r.reporterIp)),
-        r.details ? h('p', { className: 'details' }, `“${r.details}”`) : '',
-        transcript,
-        h('div', { className: 'actions' },
-          btn('Ban 24h', 'btn-danger', ban(24)),
-          btn('Ban 7d', 'btn-danger', ban(168)),
-          btn('Ban forever', 'btn-danger', ban(0)),
-          btn('Ban reporter (false report)', 'btn-ghost', async () => {
-            await api('/api/admin/ban', { ip: r.reporterIp, reason: 'False reporting', hours: 24, reportId: r.id }); refresh();
-          }),
-          btn('Dismiss', 'btn-ghost', async () => { await api('/api/admin/dismiss', { id: r.id }); refresh(); }),
-        )));
-    }
+    const nowHour = Math.floor(Date.now() / 3600_000);
+    const byHour = Object.fromEntries(st.hourly.map(b => [b.hour, b]));
+    const hours = Array.from({ length: 24 }, (_, i) => nowHour - 23 + i);
+    const max = Math.max(1, ...hours.map(hr => byHour[hr]?.chats || 0));
+    $('chart').replaceChildren(...hours.map(hr => {
+      const b = byHour[hr] || { chats: 0, messages: 0, peak: 0 };
+      const label = new Date(hr * 3600_000).toLocaleTimeString([], { hour: 'numeric' });
+      return h('div', { className: 'bar', style: `height:${(b.chats / max) * 100}%`, 'data-tip': `${label}: ${b.chats} chats · ${b.messages} msgs · peak ${b.peak}` });
+    }));
+    $('chartStart').textContent = new Date(hours[0] * 3600_000).toLocaleTimeString([], { hour: 'numeric' });
 
-    // bans
-    const bw = $('bans');
-    bw.replaceChildren();
-    const entries = Object.entries(s.bans);
-    if (!entries.length) bw.append(h('div', { className: 'empty' }, 'Nobody is banned.'));
-    else bw.append(h('table', {},
-      h('tr', {}, h('th', {}, 'IP'), h('th', {}, 'Reason'), h('th', {}, 'Banned'), h('th', {}, 'Ends'), h('th', {}, '')),
-      entries.map(([ip, b]) => h('tr', {},
-        h('td', {}, h('code', {}, ip)), h('td', {}, b.reason), h('td', {}, new Date(b.at).toLocaleString()),
-        h('td', {}, b.until ? new Date(b.until).toLocaleString() : 'Never'),
-        h('td', {}, btn('Unban', 'btn-ghost', async () => { await api('/api/admin/unban', { ip }); refresh(); }))))));
+    document.querySelectorAll('input[data-setting]').forEach(i => (i.checked = !!S.settings[i.dataset.setting]));
   }
 
+  function renderLive() {
+    $('cLive').textContent = S.online || '';
+    // chats
+    const cw = $('chats');
+    if (!S.chats.length) cw.replaceChildren(h('div', { className: 'empty' }, 'No chats right now.'));
+    else cw.replaceChildren(h('div', { className: 'tablewrap' }, h('table', {},
+      h('tr', {}, ['Mode', 'Person A', 'Person B', 'Running', 'Messages', ''].map(t => h('th', {}, t))),
+      S.chats.map(c => h('tr', {},
+        h('td', {}, h('span', { className: 'pill ' + (c.mode === 'video' ? 'video' : '') }, c.mode)),
+        h('td', {}, ipLink(c.aIp)), h('td', {}, ipLink(c.bIp)),
+        h('td', {}, ago(c.startedAt)), h('td', {}, c.msgs),
+        h('td', {}, h('div', { className: 'row-actions' }, btn('End chat', 'btn-ghost mini', () => act.end(c.a)))))))));
+
+    // users
+    const q = $('userSearch').value.trim().toLowerCase();
+    const f = $('userFilter').value;
+    const list = S.users.filter(u => (!f || u.status === f) && (!q || u.ip.toLowerCase().includes(q) || u.interests.some(i => i.includes(q))));
+    const uw = $('users');
+    if (!list.length) return uw.replaceChildren(h('div', { className: 'empty' }, S.users.length ? 'Nobody matches.' : 'Nobody online.'));
+    uw.replaceChildren(h('div', { className: 'tablewrap' }, h('table', {},
+      h('tr', {}, ['IP', 'Status', 'Mode', 'Interests', 'Online', 'Msgs', 'Reports', ''].map(t => h('th', {}, t))),
+      list.map(u => h('tr', {},
+        h('td', {}, ipLink(u.ip)),
+        h('td', {}, h('span', { className: 'pill ' + u.status }, u.status), u.chatStartedAt ? h('span', { className: 'muted', style: 'font-size:12px' }, ' ' + ago(u.chatStartedAt)) : ''),
+        h('td', {}, u.mode ? h('span', { className: 'pill ' + (u.mode === 'video' ? 'video' : '') }, u.mode) : h('span', { className: 'muted' }, '—')),
+        h('td', { style: 'max-width:180px' }, u.interests.length ? u.interests.join(', ') : h('span', { className: 'muted' }, '—')),
+        h('td', {}, ago(u.connectedAt)),
+        h('td', {}, u.msgs),
+        h('td', {}, u.reportsAgainst ? h('span', { className: 'pill bad' }, u.reportsAgainst) : h('span', { className: 'muted' }, '0')),
+        h('td', {}, h('div', { className: 'row-actions' },
+          btn('Warn', 'btn-ghost mini', () => act.warn(u)),
+          u.status === 'chatting' ? btn('End chat', 'btn-ghost mini', () => act.end(u.id)) : '',
+          btn('Kick', 'btn-ghost mini', () => act.kick(u)),
+          btn('Ban', 'btn-danger mini', () => act.ban(u.ip, 24)))))))));
+  }
+
+  function reportCard(r, { compact } = {}) {
+    const banned = !!S?.bans[r.reportedIp];
+    const transcript = h('div', { className: 'transcript' },
+      r.log.length
+        ? r.log.map(m => h('div', { className: m.who === 'reported' ? 'r' : 's' }, `${m.who === 'reported' ? 'Reported' : 'Reporter'}: ${m.text}`))
+        : h('div', { className: 'muted' }, '(no messages — probably a video-only report)'));
+    const ban = hours => async () => {
+      await api('/api/admin/ban', { ip: r.reportedIp, reason: REASONS[r.reason] || r.reason, hours, reportId: r.id });
+      toast('Banned.'); refresh(); if (compact) $('lookupDialog').close();
+    };
+    const againstCount = S ? S.reports.filter(x => x.reportedIp === r.reportedIp).length : 0;
+    return h('div', { className: 'report' },
+      h('div', { className: 'report-head' },
+        h('div', {}, h('span', { className: 'tag' }, REASONS[r.reason] || r.reason), h('span', { className: 'tag mode' }, r.mode),
+          againstCount > 1 ? h('span', { className: 'tag' }, `${againstCount} reports on this IP`) : ''),
+        h('span', { className: 'muted', style: 'font-size:12.5px' }, new Date(r.at).toLocaleString())),
+      h('div', { className: 'meta' }, 'Reported: ', ipLink(r.reportedIp), banned ? '  (banned)' : '', '   ·   Reporter: ', ipLink(r.reporterIp)),
+      r.details ? h('p', { className: 'details' }, `“${r.details}”`) : '',
+      transcript,
+      compact ? '' : h('div', { className: 'actions' },
+        btn('Ban 24h', 'btn-danger', ban(24)),
+        btn('Ban 7d', 'btn-danger', ban(168)),
+        btn('Ban forever', 'btn-danger', ban(0)),
+        btn('Ban reporter (false report)', 'btn-ghost', async () => {
+          await api('/api/admin/ban', { ip: r.reporterIp, reason: 'False reporting', hours: 24, reportId: r.id }); refresh();
+        }),
+        btn('Dismiss', 'btn-ghost', async () => { await api('/api/admin/dismiss', { id: r.id }); refresh(); }),
+        againstCount > 1 ? btn(`Dismiss all ${againstCount} on this IP`, 'btn-ghost', confirmDo(`Dismiss all ${againstCount} reports against ${r.reportedIp}?`, () => api('/api/admin/dismiss-all', { ip: r.reportedIp }))) : '',
+      ));
+  }
+
+  function renderReports() {
+    $('cReports').textContent = S.reports.length || '';
+    const f = $('reportFilter').value;
+    const q = $('reportSearch').value.trim().toLowerCase();
+    const list = S.reports.filter(r => (!f || r.reason === f) && (!q
+      || r.reportedIp.includes(q) || r.reporterIp.includes(q)
+      || r.details.toLowerCase().includes(q) || r.log.some(m => m.text.toLowerCase().includes(q))));
+    // under-18 reports first, newest first within each group
+    list.sort((a, b) => (b.reason === 'underage') - (a.reason === 'underage') || b.at - a.at);
+    const wrap = $('reports');
+    if (!list.length) return wrap.replaceChildren(h('div', { className: 'empty' }, S.reports.length ? 'No reports match.' : 'No open reports. 🎉'));
+    wrap.replaceChildren(...list.map(r => reportCard(r)));
+  }
+
+  function renderBans() {
+    const q = $('banSearch').value.trim().toLowerCase();
+    const entries = Object.entries(S.bans).filter(([ip, b]) => !q || ip.includes(q) || b.reason.toLowerCase().includes(q));
+    const bw = $('bans');
+    if (!entries.length) return bw.replaceChildren(h('div', { className: 'empty' }, Object.keys(S.bans).length ? 'No bans match.' : 'Nobody is banned.'));
+    bw.replaceChildren(h('div', { className: 'tablewrap' }, h('table', {},
+      h('tr', {}, ['IP', 'Reason', 'Banned', 'Ends', ''].map(t => h('th', {}, t))),
+      entries.sort((a, b) => b[1].at - a[1].at).map(([ip, b]) => h('tr', {},
+        h('td', {}, ipLink(ip)), h('td', {}, b.reason), h('td', {}, ago(b.at) + ' ago'),
+        h('td', {}, b.until ? new Date(b.until).toLocaleString() : 'Never'),
+        h('td', {}, h('div', { className: 'row-actions' },
+          b.until ? btn('Make permanent', 'btn-ghost mini', async () => { await api('/api/admin/ban', { ip, reason: b.reason, hours: 0 }); refresh(); }) : '',
+          btn('Unban', 'btn-ghost mini', async () => { await api('/api/admin/unban', { ip }); refresh(); }))))))));
+  }
+
+  function fillForms() {
+    if (formsFilled) return;
+    formsFilled = true;
+    const s = S.settings;
+    $('announceForm').announcement.value = s.announcement;
+    $('maintForm').maintenanceMsg.value = s.maintenanceMsg;
+    $('filterForm').bannedWords.value = s.bannedWords.join('\n');
+    $('filterForm').filterMode.value = s.filterMode;
+    $('tuneForm').autoBanReports.value = s.autoBanReports;
+    $('tuneForm').interestTimeoutSec.value = s.interestTimeoutSec;
+    $('tuneForm').msgRateLimit.value = s.msgRateLimit;
+  }
+
+  async function refresh() {
+    S = await api('/api/admin/state');
+    $('login').hidden = true; $('panel').hidden = false; $('logout').hidden = false;
+    $('lastSync').textContent = 'Updated ' + new Date().toLocaleTimeString();
+    renderOverview(); renderLive(); renderReports(); renderBans(); fillForms();
+  }
+
+  // filters re-render without a network round trip
+  ['userSearch', 'userFilter'].forEach(id => $(id).addEventListener('input', () => S && renderLive()));
+  ['reportSearch', 'reportFilter'].forEach(id => $(id).addEventListener('input', () => S && renderReports()));
+  $('banSearch').addEventListener('input', () => S && renderBans());
+
+  // ---------- settings ----------
+  async function saveSettings(patch, okId) {
+    const r = await api('/api/admin/settings', patch);
+    S && (S.settings = r.settings);
+    if (okId) flash(okId);
+    refresh();
+  }
+  document.querySelectorAll('input[data-setting]').forEach(i => i.addEventListener('change', async () => {
+    const k = i.dataset.setting;
+    if (k === 'maintenance' && i.checked && !confirm('Turn on maintenance mode? Every chat ends right now.')) { i.checked = false; return; }
+    if (!i.checked && k !== 'maintenance' && !confirm(`Turn off ${k === 'textEnabled' ? 'text' : 'video'} chat? People in those chats get sent home.`)) { i.checked = true; return; }
+    await saveSettings({ [k]: i.checked });
+    toast('Updated.');
+  }));
+  $('announceForm').onsubmit = e => { e.preventDefault(); saveSettings({ announcement: e.target.announcement.value.trim() }, 'announceOk'); };
+  $('clearAnnounce').onclick = () => { $('announceForm').announcement.value = ''; saveSettings({ announcement: '' }, 'announceOk'); };
+  $('maintForm').onsubmit = e => { e.preventDefault(); saveSettings({ maintenanceMsg: e.target.maintenanceMsg.value.trim() }, 'maintOk'); };
+  $('filterForm').onsubmit = e => {
+    e.preventDefault();
+    saveSettings({ bannedWords: e.target.bannedWords.value.split('\n'), filterMode: e.target.filterMode.value }, 'filterOk');
+  };
+  $('tuneForm').onsubmit = e => {
+    e.preventDefault();
+    const f = e.target;
+    saveSettings({ autoBanReports: f.autoBanReports.value, interestTimeoutSec: f.interestTimeoutSec.value, msgRateLimit: f.msgRateLimit.value }, 'tuneOk');
+  };
+  $('broadcastForm').onsubmit = async e => {
+    e.preventDefault();
+    const r = await api('/api/admin/broadcast', { message: e.target.message.value.trim() });
+    e.target.reset();
+    flash('broadcastOk', `Sent to ${r.sent} ${r.sent === 1 ? 'person' : 'people'}`);
+  };
+
+  // ---------- bans ----------
   $('manualBan').onsubmit = async e => {
     e.preventDefault();
     const fd = new FormData(e.target);
     await api('/api/admin/ban', { ip: fd.get('ip').trim(), reason: fd.get('reason') || 'Manual ban', hours: Number(fd.get('hours')) });
     e.target.reset();
-    refresh();
+    toast('Banned.'); refresh();
+  };
+  $('unbanAll').onclick = confirmDo('Unban everyone? This clears every ban.', () => api('/api/admin/unban-all', {}));
+  $('dismissAll').onclick = confirmDo('Dismiss every open report?', () => api('/api/admin/dismiss-all', {}));
+
+  // ---------- IP lookup ----------
+  async function lookup(ip) {
+    const d = await api('/api/admin/ip?ip=' + encodeURIComponent(ip));
+    const body = $('lookupBody');
+    body.replaceChildren(
+      h('h3', {}, 'IP ', h('code', {}, d.ip)),
+      h('p', { className: 'muted', style: 'margin:0 0 8px' },
+        d.ban ? `Banned — ${d.ban.reason} · ${d.ban.until ? 'until ' + new Date(d.ban.until).toLocaleString() : 'permanent'}` : 'Not banned',
+        ` · ${d.online.length} online · ${d.reportsAgainst.length} reports against · ${d.reportsFiled.length} filed`),
+      h('div', { className: 'actions', style: 'margin-top:0' },
+        d.ban
+          ? btn('Unban', 'btn-ghost', async () => { await api('/api/admin/unban', { ip }); refresh(); lookup(ip); })
+          : [btn('Ban 24h', 'btn-danger', () => act.ban(ip, 24).then(() => lookup(ip))),
+             btn('Ban 7d', 'btn-danger', () => act.ban(ip, 168).then(() => lookup(ip))),
+             btn('Ban forever', 'btn-danger', () => act.ban(ip, 0).then(() => lookup(ip)))],
+        d.online.length ? btn(`Kick all ${d.online.length}`, 'btn-ghost', async () => {
+          await api('/api/admin/kick-ip', { ip }); toast('Kicked.'); refresh(); lookup(ip);
+        }) : '',
+        d.reportsAgainst.length ? btn('Dismiss its reports', 'btn-ghost', async () => {
+          await api('/api/admin/dismiss-all', { ip }); refresh(); lookup(ip);
+        }) : ''),
+      d.online.length ? h('div', { className: 'lookup-section' }, h('h4', {}, 'Online now'),
+        ...d.online.map(o => h('div', { className: 'meta' }, `${o.status}${o.mode ? ' · ' + o.mode : ''} · connected ${ago(o.connectedAt)} ago`))) : '',
+      h('div', { className: 'lookup-section' }, h('h4', {}, `Reports against (${d.reportsAgainst.length})`),
+        d.reportsAgainst.length ? d.reportsAgainst.map(r => reportCard(r, { compact: true })) : h('div', { className: 'muted' }, 'None.')),
+      h('div', { className: 'lookup-section' }, h('h4', {}, `Reports filed (${d.reportsFiled.length})`),
+        d.reportsFiled.length ? d.reportsFiled.map(r => h('div', { className: 'meta' }, `${new Date(r.at).toLocaleString()} · ${REASONS[r.reason] || r.reason} → `, h('code', {}, r.reportedIp))) : h('div', { className: 'muted' }, 'None.')),
+    );
+    if (!$('lookupDialog').open) $('lookupDialog').showModal();
+  }
+  $('lookupClose').onclick = () => $('lookupDialog').close();
+  $('lookupForm').onsubmit = e => { e.preventDefault(); lookup(e.target.ip.value.trim()); };
+
+  // ---------- export / import ----------
+  $('exportBtn').onclick = async () => {
+    const data = await api('/api/admin/export');
+    const a = h('a', { href: URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })), download: `driftchat-export-${new Date().toISOString().slice(0, 10)}.json` });
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  $('importBtn').onclick = async () => {
+    const file = $('importFile').files[0];
+    if (!file) return toast('Pick an export file first.');
+    let data;
+    try { data = JSON.parse(await file.text()); } catch { return toast("That file isn't valid JSON."); }
+    const r = await api('/api/admin/import', { bans: data.bans, settings: $('importSettings').checked ? data.settings : undefined });
+    flash('importOk', `Imported ${r.bansImported} bans`);
+    formsFilled = false; refresh();
   };
 
+  // ---------- go ----------
   if (key) refresh().catch(() => {});
-  setInterval(() => { if (key && !$('panel').hidden) refresh().catch(() => {}); }, 10000);
+  setInterval(() => {
+    const busy = document.querySelector('dialog[open]');
+    if (key && !$('panel').hidden && !busy && !document.hidden) refresh().catch(() => {});
+  }, 5000);
 })();
 </script>
 </body>

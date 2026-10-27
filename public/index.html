@@ -19,6 +19,11 @@
     </a>
     <div class="online"><span class="pulse"></span><span id="onlineCount">—</span> online</div>
   </header>
+  <div class="announce" id="announce" hidden>
+    <span class="announce-icon" aria-hidden="true">📢</span>
+    <span id="announceText"></span>
+    <button type="button" class="announce-close" id="announceClose" aria-label="Dismiss">×</button>
+  </div>
 
   <!-- ============ HOME ============ -->
   <main id="home" class="home">
@@ -127,11 +132,22 @@
   <!-- ============ BANNED ============ -->
   <div class="banned" id="banned" hidden>
     <div class="banned-card">
-      <h2>You've been banned</h2>
+      <h2 id="bannedTitle">You've been banned</h2>
       <p id="bannedReason"></p>
       <p class="muted" id="bannedUntil"></p>
     </div>
   </div>
+
+  <!-- ============ MODERATOR WARNING ============ -->
+  <dialog id="warnDialog" class="dialog warn-dialog">
+    <form method="dialog">
+      <h3>⚠️ Warning from a moderator</h3>
+      <p id="warnText"></p>
+      <div class="dialog-actions">
+        <button class="btn btn-danger" value="ok">I understand</button>
+      </div>
+    </form>
+  </dialog>
 
   <div class="toast" id="toast" hidden></div>
 

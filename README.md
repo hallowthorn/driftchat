@@ -39,7 +39,20 @@ If your Pages URL isn't `https://hallowthorn.github.io`, change `ALLOWED_ORIGINS
 | Moderation | `/admin`: open reports with transcripts, ban 24h / 7d / forever, ban false reporters, manual IP bans, unban, live queue stats |
 | Auto-ban | `AUTO_BAN_REPORTS` different reporters within 24h → 24h ban (default 5) |
 
-Data (bans, reports) is stored in `data/*.json` — no database needed.
+Data (bans, reports, settings) is stored in `data/*.json` — no database needed.
+
+## Admin panel
+
+`/admin.html` (or `/admin` when the server hosts the site). Tabs:
+
+- **Overview** — online now, active chats, queue sizes, peak online, chats/messages started, average chat length, chats-per-hour chart (last 24h), and quick switches for text chat, video chat and maintenance mode.
+- **Live** — every active chat (end it) and everyone online with IP, status, mode, interests, time online, message count and report count. Per-user actions: **Warn** (popup they must acknowledge), **End chat**, **Kick** (disconnect, no ban), **Ban**. Live message text is never shown — only reported transcripts.
+- **Reports** — filter by reason, search IPs and transcript text, under-18 reports sorted first, ban 24h/7d/forever, ban the reporter for false reports, dismiss one / all on an IP / everything.
+- **Bans** — manual ban (1h to permanent), search, make a temp ban permanent, unban, unban everyone.
+- **Site controls** — broadcast a one-time message to everyone online, an announcement banner at the top of the site, maintenance message, word filter (mask with `****` or block the message), auto-ban threshold, interest-match wait time, message rate limit.
+- **Lookup & data** — IP lookup (ban status, online sessions, reports against and filed, with ban/kick/dismiss buttons), JSON export, and import to restore bans/settings after a restart.
+
+Click any IP anywhere in the panel to open its lookup.
 
 ## Environment variables
 

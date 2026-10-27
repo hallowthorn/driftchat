@@ -19,8 +19,10 @@
     remoteVideo: $('remoteVideo'), localVideo: $('localVideo'),
     remoteOverlay: $('remoteOverlay'), remoteOverlayText: $('remoteOverlayText'),
     micBtn: $('micBtn'), camBtn: $('camBtn'),
-    banned: $('banned'), bannedReason: $('bannedReason'), bannedUntil: $('bannedUntil'),
+    banned: $('banned'), bannedTitle: $('bannedTitle'), bannedReason: $('bannedReason'), bannedUntil: $('bannedUntil'),
     toast: $('toast'),
+    announce: $('announce'), announceText: $('announceText'), announceClose: $('announceClose'),
+    warnDialog: $('warnDialog'), warnText: $('warnText'),
   };
 
   const state = {
@@ -31,6 +33,7 @@
     transcript: [],           // for Save log
     pc: null, localStream: null, iceServers: null, pendingCandidates: [],
     typingSent: false, typingTimer: null, unread: 0,
+    cfg: { textEnabled: true, videoEnabled: true, maintenance: false, maintenanceMsg: '', announcement: '' },
   };
 
   // ---------------- interests ----------------
@@ -98,6 +101,8 @@
     el.homeError.textContent = '';
     if (staticHost && !SERVER) return homeError("Couldn't find the chat server — refresh the page (Ctrl+Shift+R).");
     if (!socket.connected) return homeError('Waking up the chat server… try again in a few seconds.');
+    if (state.cfg.maintenance) return homeError(state.cfg.maintenanceMsg || 'Down for maintenance — back soon.');
+    if (!state.cfg[mode + 'Enabled']) return homeError(`${mode === 'video' ? 'Video' : 'Text'} chat is turned off right now.`);
     if (!el.ageCheck.checked) return homeError('Tick the 18+ box to continue.');
     try { localStorage.setItem('dc_age', '1'); } catch {}
     if (el.interestInput.value.trim()) { addInterest(el.interestInput.value); el.interestInput.value = ''; }
@@ -332,11 +337,11 @@
     if (!document.hidden) { state.unread = 0; document.title = 'Driftchat — talk to strangers'; }
   });
   let toastTimer;
-  function toast(msg) {
+  function toast(msg, ms = 2600) {
     el.toast.textContent = msg;
     el.toast.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => (el.toast.hidden = true), 2600);
+    toastTimer = setTimeout(() => (el.toast.hidden = true), ms);
   }
 
   // ---------------- reporting ----------------
@@ -440,10 +445,68 @@
   socket.on('banned', ban => {
     goHome();
     el.banned.hidden = false;
+    el.bannedTitle.textContent = "You've been banned";
     el.bannedReason.textContent = ban?.reason ? `Reason: ${ban.reason}` : '';
     el.bannedUntil.textContent = ban?.until
       ? `Ends ${new Date(ban.until).toLocaleString()}.`
       : 'This ban is permanent.';
+  });
+
+  socket.on('kicked', reason => {
+    goHome();
+    el.banned.hidden = false;
+    el.bannedTitle.textContent = 'You were removed';
+    el.bannedReason.textContent = reason || 'Removed by a moderator.';
+    el.bannedUntil.textContent = 'Reload the page to come back. Keep it decent.';
+  });
+
+  // ---------------- moderator / site-wide controls ----------------
+  function backHomeWith(msg) {
+    if (!el.chat.hidden) { if (location.hash) history.back(); goHome(); }
+    homeError(msg);
+  }
+
+  let dismissedAnnouncement = '';
+  try { dismissedAnnouncement = localStorage.getItem('dc_announce_dismissed') || ''; } catch {}
+  function renderBanner() {
+    const { maintenance, maintenanceMsg, announcement } = state.cfg;
+    const text = maintenance ? (maintenanceMsg || 'Down for maintenance — back soon.') : announcement;
+    const show = !!text && (maintenance || text !== dismissedAnnouncement);
+    el.announce.hidden = !show;
+    el.announce.classList.toggle('maint', !!maintenance);
+    el.announceClose.hidden = !!maintenance;
+    el.announceText.textContent = text || '';
+  }
+  el.announceClose.addEventListener('click', () => {
+    dismissedAnnouncement = state.cfg.announcement;
+    try { localStorage.setItem('dc_announce_dismissed', dismissedAnnouncement); } catch {}
+    renderBanner();
+  });
+
+  socket.on('config', cfg => {
+    state.cfg = { ...state.cfg, ...cfg };
+    el.startText.disabled = !cfg.textEnabled || cfg.maintenance;
+    el.startVideo.disabled = !cfg.videoEnabled || cfg.maintenance;
+    el.startText.title = el.startText.disabled ? 'Text chat is off right now' : '';
+    el.startVideo.title = el.startVideo.disabled ? 'Video chat is off right now' : '';
+    renderBanner();
+    const active = state.status === 'chatting' || state.status === 'searching' || state.status === 'ended';
+    if (!active || el.chat.hidden) return;
+    if (cfg.maintenance) backHomeWith(cfg.maintenanceMsg || 'Down for maintenance — back soon.');
+    else if (!cfg[state.mode + 'Enabled']) backHomeWith(`${state.mode === 'video' ? 'Video' : 'Text'} chat was just turned off.`);
+  });
+
+  socket.on('maintenance', msg => backHomeWith(msg || 'Down for maintenance — back soon.'));
+  socket.on('mode-disabled', mode => backHomeWith(`${mode === 'video' ? 'Video' : 'Text'} chat is turned off right now.`));
+
+  socket.on('broadcast', msg => {
+    if (!el.chat.hidden && state.status !== 'idle') addSys(`<b>📢 ${escapeHtml(msg)}</b>`, true);
+    else toast('📢 ' + msg, 8000);
+  });
+
+  socket.on('mod-warning', msg => {
+    el.warnText.textContent = msg;
+    if (!el.warnDialog.open) el.warnDialog.showModal();
   });
 
   socket.on('disconnect', () => {
